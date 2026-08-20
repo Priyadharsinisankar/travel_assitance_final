@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ chatbot_title }}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,#eef4ff,#f8fafc,#eefbf6);display:flex;align-items:center;justify-content:center;padding:20px;color:#172033}
+.app{width:min(100%,980px);height:min(92vh,820px);background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(16,24,40,.12);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;border:1px solid #e5e7eb}
+header{padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;gap:14px;align-items:center}
+.logo{width:48px;height:48px;border-radius:15px;background:#e8efff;display:grid;place-items:center;font-size:24px}
+h1{font-size:20px;margin:0} header p{font-size:13px;color:#667085;margin:4px 0 0}
+#chat{overflow-y:auto;padding:24px}
+.row{display:flex;margin-bottom:16px}.row.user{justify-content:flex-end}
+.bubble{max-width:78%;padding:12px 15px;border-radius:17px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.user .bubble{background:#2563eb;color:white;border-bottom-right-radius:5px}
+.assistant .bubble{background:#f2f4f7;border-bottom-left-radius:5px}
+.welcome{text-align:center;max-width:700px;margin:50px auto;color:#667085}
+.welcome h2{color:#172033}.suggestions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.suggestion{background:#fff;border:1px solid #e5e7eb;border-radius:999px;padding:9px 13px;cursor:pointer}
+.suggestion:hover{border-color:#2563eb;color:#2563eb}
+.composer{border-top:1px solid #e5e7eb;padding:14px}
+form{display:flex;gap:10px;max-width:900px;margin:auto}
+textarea{flex:1;min-height:50px;max-height:130px;resize:vertical;border:1px solid #d0d5dd;border-radius:15px;padding:14px;font:inherit;outline:none}
+textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.send{border:0;border-radius:15px;background:#2563eb;color:white;padding:0 20px;font-weight:700;cursor:pointer}
+.send:disabled{opacity:.55}.error{text-align:center;color:#b42318;font-size:14px;padding-top:6px}
+.typing{display:flex;gap:5px}.typing span{width:7px;height:7px;background:#98a2b3;border-radius:50%;animation:bounce 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@media(max-width:700px){body{padding:0}.app{height:100vh;border-radius:0}.bubble{max-width:88%}header{padding:16px}#chat{padding:16px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+  <div class="logo">✈️</div>
+  <div>
+    <h1>{{ chatbot_title }}</h1>
+    <p>{{ chatbot_purpose }}</p>
+  </div>
+</header>
+
+<section id="chat">
+  <div class="welcome" id="welcome">
+    <h2>How can I help?</h2>
+    <div>Ask about packing, station facilities, or simulated train/PNR status.</div>
+    <div class="suggestions">
+      <button class="suggestion" data-text="Create a packing checklist for a 5-day summer train journey.">🎒 Packing checklist</button>
+      <button class="suggestion" data-text="Does Chennai Egmore have a waiting room?">🚉 Station facilities</button>
+      <button class="suggestion" data-text="Show me the simulated status of train 12675.">🚆 Train status</button>
+    </div>
+  </div>
+</section>
+
+<div class="composer">
+<form id="chatForm">
+<textarea id="messageInput" maxlength="4000" placeholder="Type your travel question..." required></textarea>
+<button class="send" id="sendButton">Send</button>
+</form>
+<div class="error" id="error" hidden></div>
+</div>
+</main>
+
+<script>
+const chat=document.getElementById("chat");
+const form=document.getElementById("chatForm");
+const input=document.getElementById("messageInput");
+const send=document.getElementById("sendButton");
+const errorBox=document.getElementById("error");
+let history=[];
+
+function addMessage(role,text){
+  document.getElementById("welcome")?.remove();
+  const row=document.createElement("div");
+  row.className="row "+role;
+  const bubble=document.createElement("div");
+  bubble.className="bubble";
+  bubble.textContent=text;
+  row.appendChild(bubble);
+  chat.appendChild(row);
+  chat.scrollTop=chat.scrollHeight;
+}
+function typing(){
+  const row=document.createElement("div");
+  row.className="row assistant";row.id="typing";
+  row.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  chat.appendChild(row);chat.scrollTop=chat.scrollHeight;
+}
+async function sendMessage(text){
+  text=text.trim();if(!text||send.disabled)return;
+  errorBox.hidden=true;addMessage("user",text);
+  history.push({role:"user",content:text});
+  send.disabled=true;input.disabled=true;typing();
+  try{
+    const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:text,history:history.slice(-20)})});
+    const data=await res.json();document.getElementById("typing")?.remove();
+    if(!res.ok)throw new Error(data.error||"Request failed.");
+    addMessage("assistant",data.reply);history.push({role:"assistant",content:data.reply});
+  }catch(e){
+    document.getElementById("typing")?.remove();
+    errorBox.textContent=e.message||"Something went wrong.";errorBox.hidden=false;
+  }finally{send.disabled=false;input.disabled=false;input.focus()}
+}
+form.addEventListener("submit",e=>{e.preventDefault();const text=input.value;input.value="";sendMessage(text)});
+input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+document.querySelectorAll(".suggestion").forEach(b=>b.addEventListener("click",()=>{input.value=b.dataset.text;input.focus()}));
+</script>
+</body>
+</html>
