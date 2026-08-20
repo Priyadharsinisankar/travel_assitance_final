@@ -1,0 +1,69 @@
+{
+  "stations": [
+    {
+      "name": "Chennai Egmore",
+      "code": "MS",
+      "waiting_room": "Available",
+      "food_stall": "Available",
+      "restroom": "Available",
+      "drinking_water": "Available",
+      "parking": "Available"
+    },
+    {
+      "name": "Nagapattinam",
+      "code": "NGT",
+      "waiting_room": "Available",
+      "food_stall": "Available",
+      "restroom": "Available",
+      "drinking_water": "Available",
+      "parking": "Available"
+    }
+  ],
+  "packing": {
+    "summer": [
+      "Light cotton clothes",
+      "Water bottle",
+      "Sunscreen",
+      "Sunglasses",
+      "Cap",
+      "Charger and power bank",
+      "ID proof",
+      "Travel ticket"
+    ],
+    "winter": [
+      "Warm clothes",
+      "Jacket",
+      "Moisturizer",
+      "Charger and power bank",
+      "ID proof",
+      "Travel ticket"
+    ],
+    "monsoon": [
+      "Umbrella or raincoat",
+      "Water-resistant bag",
+      "Extra clothes",
+      "Plastic or waterproof pouch",
+      "Charger and power bank",
+      "ID proof",
+      "Travel ticket"
+    ]
+  },
+  "train_status_simulation": [
+    {
+      "train_number": "12675",
+      "train_name": "Example Express",
+      "from": "Chennai",
+      "to": "Madurai",
+      "status": "Running",
+      "note": "Simulation data only"
+    },
+    {
+      "train_number": "12676",
+      "train_name": "Example Express Return",
+      "from": "Madurai",
+      "to": "Chennai",
+      "status": "Scheduled",
+      "note": "Simulation data only"
+    }
+  ]
+}
